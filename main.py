@@ -1,7 +1,10 @@
 import torch
 from PIL import Image
+import random
 import os
 import shutil
+probabilities = [0.6, 0.2, 0.2] # 样本比例
+elements = ['train', 'val', 'test']
 IMAGE_PATH='images'
 SAVE_PATH='datasets'
 CATEGORIES_TXT = 'categories.txt'
@@ -31,7 +34,6 @@ def getImgBox(imagePath):
     # print(columnList)
     for index in indexList:
         if temp.loc[index, 'name'] == 'bird':
-            box = {}
             xmin = temp.loc[index, 'xmin']
             ymin = temp.loc[index, 'ymin']
             xmax = temp.loc[index, 'xmax']
@@ -58,8 +60,14 @@ def main():
         os.remove(CATEGORIES_TXT)
     if os.path.exists(currentImgPath)==False:
         os.mkdir(currentImgPath)
+        os.mkdir(currentImgPath+'/train')
+        os.mkdir(currentImgPath+'/val')
+        os.mkdir(currentImgPath+'/test')
     if os.path.exists(currentLabelPath)==False:
         os.mkdir(currentLabelPath)
+        os.mkdir(currentLabelPath+'/train')
+        os.mkdir(currentLabelPath+'/val')
+        os.mkdir(currentLabelPath+'/test')
     categoriesTxt = open(CATEGORIES_TXT,'w',encoding='utf-8')
     for dirpath in os.listdir(IMAGE_PATH):
         markDatas.append(dirpath)
@@ -67,16 +75,21 @@ def main():
         categoriesTxt.write('  '+str(MARKINDEX)+': '+dirpath)
         categoriesTxt.write('\n')
         for filename in os.listdir(path):
-            txtPath = os.path.join(currentLabelPath, str(fileIndex)+'.txt')
+            results = random.choices(elements, probabilities)
+            tempSavePath = 'train'
+            if len(results)>0:
+                tempSavePath = results[0]
+            txtPath = os.path.join(currentLabelPath, tempSavePath, str(fileIndex)+'.txt')
             tempTxt=open(txtPath,'w')
             sourcePath=os.path.join(path,filename)
             bboxes = getImgBox(sourcePath)
+
             for bbox in bboxes:
                 x,y,w,h = bbox
                 tempTxt.write(str(MARKINDEX)+' '+str(x)+' '+str(y)+' '+str(w)+' '+str(h))
                 tempTxt.write('\n')
             tempTxt.close()
-            targetPath = os.path.join(currentImgPath, str(fileIndex)+'.jpg')
+            targetPath = os.path.join(currentImgPath, tempSavePath, str(fileIndex)+'.jpg')
             shutil.copy(sourcePath, targetPath)
             fileIndex = fileIndex + 1
         MARKINDEX = MARKINDEX + 1
