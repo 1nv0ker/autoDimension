@@ -83,7 +83,8 @@ def main():
             tempTxt=open(txtPath,'w')
             sourcePath=os.path.join(path,filename)
             bboxes = getImgBox(sourcePath)
-
+            if len(bboxes) == 0:
+                continue
             for bbox in bboxes:
                 x,y,w,h = bbox
                 tempTxt.write(str(MARKINDEX)+' '+str(x)+' '+str(y)+' '+str(w)+' '+str(h))
