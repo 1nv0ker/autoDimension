@@ -9,6 +9,7 @@ elements = ['train', 'val', 'test']
 IMAGE_PATH='images'
 SAVE_PATH='datasets'
 CATEGORIES_TXT = 'categories.txt'
+RESIZE=608
 # Model
 #  # local model
 model = torch.hub.load('ultralytics/yolov5', 'yolov5x')
@@ -22,12 +23,26 @@ def createDatasetDir(SAVEINDEX):
         os.mkdir(path)
         return path
 def getImgBox(imagePath):
-    im = imagePath
-    results = model(im)
-    xyxy = results.pandas().xyxy
-    size=Image.open(im).size
+    
+    image = Image.open(imagePath)
+    size=image.size
     width = size[0]
     height = size[1]
+    rate = 0
+    targetW = RESIZE
+    targetH = RESIZE
+    if width>height:
+        rate = height/width
+        targetH = rate*RESIZE
+    else:
+        rate = width/height
+        targetW = rate* RESIZE
+    image = image.resize((int(targetW), int(targetH)))
+    newSize=image.size
+    newWidth =newSize[0]
+    newHeigt = newSize[1]
+    results = model(image)
+    xyxy = results.pandas().xyxy
     temp = xyxy[0]
     indexList = temp.index.to_list()
     bbox = []
@@ -39,12 +54,12 @@ def getImgBox(imagePath):
             ymin = temp.loc[index, 'ymin']
             xmax = temp.loc[index, 'xmax']
             ymax = temp.loc[index, 'ymax']
-            x = (xmin+xmax/2)/width
-            y = (ymin+ymax/2)/height
-            w = xmax/width
-            h = ymax/height
+            x = (xmin+xmax/2)/newWidth
+            y = (ymin+ymax/2)/newHeigt
+            w = xmax/newWidth
+            h = ymax/newHeigt
             bbox.append([x,y,w,h])
-    return bbox
+    return [bbox, image]
 
 def main():
     SAVEINDEX=0
@@ -85,7 +100,7 @@ def main():
             sourcePath=os.path.join(path,filename)
             if imghdr.what(sourcePath) == None:
                 continue
-            bboxes = getImgBox(sourcePath)
+            bboxes, image = getImgBox(sourcePath)
             if len(bboxes) == 0:
                 continue
             for bbox in bboxes:
@@ -93,8 +108,9 @@ def main():
                 tempTxt.write(str(MARKINDEX)+' '+str(x)+' '+str(y)+' '+str(w)+' '+str(h))
                 tempTxt.write('\n')
             tempTxt.close()
-            targetPath = os.path.join(currentImgPath, tempSavePath, str(fileIndex)+'.jpg')
-            shutil.copy(sourcePath, targetPath)
+            targetPath = os.path.join(currentImgPath, tempSavePath, str(fileIndex)+'.png')
+            image.save(targetPath)
+            # shutil.copy(sourcePath, targetPath)
             fileIndex = fileIndex + 1
         MARKINDEX = MARKINDEX + 1
     categoriesTxt.close()
