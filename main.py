@@ -3,6 +3,7 @@ from PIL import Image
 import random
 import os
 import shutil
+import imghdr
 probabilities = [0.6, 0.2, 0.2] # 样本比例
 elements = ['train', 'val', 'test']
 IMAGE_PATH='images'
@@ -82,6 +83,8 @@ def main():
             txtPath = os.path.join(currentLabelPath, tempSavePath, str(fileIndex)+'.txt')
             tempTxt=open(txtPath,'w')
             sourcePath=os.path.join(path,filename)
+            if imghdr.what(sourcePath) == None:
+                continue
             bboxes = getImgBox(sourcePath)
             if len(bboxes) == 0:
                 continue
