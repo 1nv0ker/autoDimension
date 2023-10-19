@@ -54,10 +54,10 @@ def getImgBox(imagePath):
             ymin = temp.loc[index, 'ymin']
             xmax = temp.loc[index, 'xmax']
             ymax = temp.loc[index, 'ymax']
-            x = (xmin+xmax/2)/newWidth
-            y = (ymin+ymax/2)/newHeigt
-            w = xmax/newWidth
-            h = ymax/newHeigt
+            x = (xmax+xmin/2)/newWidth
+            y = (ymax+ymin/2)/newHeigt
+            w = (xmax-xmin)/newWidth
+            h = (ymax-ymin)/newHeigt
             bbox.append([x,y,w,h])
     return [bbox, image]
 
